@@ -1,0 +1,6 @@
+{
+    "ShortDescription": "Adds various filters to the TimeSheet panel",
+    "CompatibleTpVersion": {
+        "Minimum": "3.0.0"
+    }
+}
