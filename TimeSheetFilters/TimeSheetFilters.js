@@ -9,9 +9,11 @@ tau.mashups
 	{
 		var TimeSheetFilters = 
 		{
+		    _projects : {},
+		    
 			Initialize : function()
 			{
-				this.UpdateUI();
+				this.Update();
 				this.AttachControls();
 				
         		var $target = $('#ctl00_mainArea_pnlUpd');
@@ -22,13 +24,28 @@ tau.mashups
         		if (window.MutationObserver)
         		{
         		    var self = this;
-        			var observer = new MutationObserver(function() { self.UpdateUI.call(self); });
+        			var observer = new MutationObserver(function() { self.Update.call(self); });
         			observer.observe($target[0], { childList: true });
         		}
 			},
 			
-			UpdateUI: function()
+			GetProjects: function()
 			{
+			    var projects = {};
+			    $('.generalTable .dataRow > td:first-of-type').each(function()
+			    {
+			        var name = $(this).text().trim();
+			        if (name)
+			        {
+			            projects[name] = 1;
+			        }
+			    });
+			    this._projects = projects;
+			},
+			
+			Update: function()
+			{
+				this.GetProjects();
 				this.UpdateAllInputs();
 			},
 			
