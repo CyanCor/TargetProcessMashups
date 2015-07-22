@@ -9,10 +9,14 @@ tau.mashups
 	{
 		var TimeSheetFilters = 
 		{
+		    _allProjectsTitle : '- All -',
+		    
 		    _projects : {},
+		    _selectedProject : null,
 		    
 			Initialize : function()
 			{
+			    this.RenderFilterBar();
 				this.Update();
 				this.AttachControls();
 				
@@ -29,9 +33,10 @@ tau.mashups
         		}
 			},
 			
-			GetProjects: function()
+			UpdateProjects: function()
 			{
 			    var projects = {};
+			    projects[this._allProjectsTitle] = 1;
 			    $('.generalTable .dataRow > td:first-of-type').each(function()
 			    {
 			        var name = $(this).text().trim();
@@ -41,11 +46,12 @@ tau.mashups
 			        }
 			    });
 			    this._projects = projects;
+			    this.RenderProjectSelector();
 			},
 			
 			Update: function()
 			{
-				this.GetProjects();
+				this.UpdateProjects();
 				this.UpdateAllInputs();
 			},
 			
@@ -54,16 +60,66 @@ tau.mashups
 				$('td .tC input[value!=0]').css('color', '#000');
 				$('td .tC input[value=0]').css('color', '#FFF');
 			},
+
+			RenderProjectSelector: function()
+			{
+			    var selector = $('#ProjectSelector'), option;
+			    selector.empty();
+			    var selectedProjectAvailable = false;
+			    for (var project in this._projects)
+			    {
+			        option = $('<option></option>');
+			        option.val(project);
+			        option.text(project);
+			        if (project == this._selectedProject)
+			        {
+			            selectedProjectAvailable = true;
+			            option.prop('selected', 'selected');
+			        }
+			        selector.append(option);
+			    }
+			    if (selectedProjectAvailable)
+			    {
+			        this.FilterProject(this._selectedProject);
+			    }
+			},
+			
+			FilterProject: function(projectName)
+			{
+			    this._selectedProject = projectName;
+			    
+			    var self = this;
+			    $('.generalTable .dataRow').each(function()
+			    {
+			        var row = $(this);
+			        var project = row.find('td:first-of-type').text().trim();
+
+			        project == projectName || projectName == self._allProjectsTitle
+			            ? row.show()
+			            : row.hide();
+			    });
+			},
+			
+			RenderFilterBar: function()
+			{
+			    var self = this;
+        		var topBar = $('<tr id="FilterBar"></tr>');
+        		var projectSelector = $('<select id="ProjectSelector"></select>');
+        		projectSelector.change(function()
+        		    {
+        		        self.FilterProject.call(self, projectSelector.find(':selected').val());
+        		    });
+        		var cell = $('<td colspan="4" id="FilterBarContent"></td>');
+        		cell.append(projectSelector);
+        		topBar.append(cell);
+        		$('#timeOptions > tbody').prepend(topBar);
+			},
 			
 			AttachControls: function()
 			{
-        		var topBar = $('<tr></tr>');
-        		var cell = $('<td colspan="4" align="right"></td>');
         		var updateButton = $('<input type="button" value="Update" />');
-        		updateButton.click(timeSheetFilters.UpdateAllInputs);
-        		cell.append(updateButton);
-        		topBar.append(cell);
-        		$('#timeOptions > tbody').prepend(topBar);
+        		updateButton.click(this.UpdateAllInputs.bind(this));
+        		$('#FilterBarContent').append(updateButton);
 			}
 		};
 		  
