@@ -9,8 +9,13 @@ tau.mashups
 	{
 		var TimeSheetFilters = 
 		{
-		    _allProjectsTitle : '- All -',
+		    // Constant values
+		    _allProjectsTitle : '- All Projects -',
+
+            // Initial settings - feel free to edit these
+		    _invisibleZeros : true,
 		    
+		    // Private fields
 		    _projects : {},
 		    _selectedProject : null,
 		    
@@ -19,13 +24,17 @@ tau.mashups
 			    this.RenderFilterBar();
 				this.Update();
 				this.AttachControls();
-				
+				this.AttachObserver();
+			},
+			
+			AttachObserver: function()
+			{
         		var $target = $('#ctl00_mainArea_pnlUpd');
         		if (!$target.length)
         		{
         			return;
         		}
-        		if (window.MutationObserver)
+        		if (MutationObserver)
         		{
         		    var self = this;
         			var observer = new MutationObserver(function() { self.Update.call(self); });
@@ -47,6 +56,10 @@ tau.mashups
 			    });
 			    this._projects = projects;
 			    this.RenderProjectSelector();
+			    if (this._projects[this._selectedProject])
+			    {
+			        this.FilterProject(this._selectedProject);
+			    }
 			},
 			
 			Update: function()
@@ -65,7 +78,6 @@ tau.mashups
 			{
 			    var selector = $('#ProjectSelector'), option;
 			    selector.empty();
-			    var selectedProjectAvailable = false;
 			    for (var project in this._projects)
 			    {
 			        option = $('<option></option>');
@@ -73,14 +85,9 @@ tau.mashups
 			        option.text(project);
 			        if (project == this._selectedProject)
 			        {
-			            selectedProjectAvailable = true;
 			            option.prop('selected', 'selected');
 			        }
 			        selector.append(option);
-			    }
-			    if (selectedProjectAvailable)
-			    {
-			        this.FilterProject(this._selectedProject);
 			    }
 			},
 			
