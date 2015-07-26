@@ -9,11 +9,15 @@ tau.mashups
 	{
 		var TimeSheetFilters = 
 		{
-		    // Constant values
+		    // Constants - feel free to edit these
 		    _allProjectsTitle : '- All Projects -',
 
             // Initial settings - feel free to edit these
 		    _invisibleZeros : true,
+			_hideEmptyRows : false,
+		    
+		    // Internal constants - do not modify
+		    _observerPanelSelector : '#ctl00_mainArea_pnlUpd',
 		    
 		    // Private fields
 		    _projects : {},
@@ -29,7 +33,7 @@ tau.mashups
 			
 			AttachObserver: function()
 			{
-        		var $target = $('#ctl00_mainArea_pnlUpd');
+        		var $target = $(this._observerPanelSelector);
         		if (!$target.length)
         		{
         			return;
@@ -70,10 +74,16 @@ tau.mashups
 			
 			UpdateAllInputs: function()
 			{
-				$('td .tC input[value!=0]').css('color', '#000');
-				$('td .tC input[value=0]').css('color', '#FFF');
+				if (this._invisibleZeros)
+				{
+					$('td .tC input[value!=0]').css('color', '#000');
+					$('td .tC input[value=0]').css('color', 'transparent');
+				} else
+				{
+					$('td .tC input').css('color', '#000');
+				}
 			},
-
+			
 			RenderProjectSelector: function()
 			{
 			    var selector = $('#ProjectSelector'), option;
@@ -93,6 +103,7 @@ tau.mashups
 			
 			FilterProject: function(projectName)
 			{
+				projectName = projectName || this._selectedProject || this._allProjectsTitle;
 			    this._selectedProject = projectName;
 			    
 			    var self = this;
@@ -100,10 +111,12 @@ tau.mashups
 			    {
 			        var row = $(this);
 			        var project = row.find('td:first-of-type').text().trim();
+					var time = row.find('> .timeTotal span').first().text().replace(/0/g, '').trim();
 
-			        project == projectName || projectName == self._allProjectsTitle
-			            ? row.show()
-			            : row.hide();
+			        ((project == projectName) || (projectName == self._allProjectsTitle))
+					&& (!self._hideEmptyRows || time)
+						? row.show()
+						: row.hide();
 			    });
 			},
 			
@@ -124,9 +137,41 @@ tau.mashups
 			
 			AttachControls: function()
 			{
+				var filterBar = $('#FilterBarContent');
+				var self = this;
+				var checkbox, label;
+				
+				// Invisible Zeros
+        		checkbox = $('<input type="checkbox" value="true" id="InvisibleZerosCheckbox"></input>');
+				if (this._invisibleZeros) { checkbox.prop('checked', 'checked'); }
+				checkbox.change(function() {self.InvisibleZerosCheckboxChanged.call(self, this)});
+				label = $('<label for="InvisibleZerosCheckbox">Invisible Zeros</label>');
+				filterBar.append(checkbox);
+				filterBar.append(label);
+				
+				// Hide empty rows
+        		checkbox = $('<input type="checkbox" value="true" id="HideEmptyRowsCheckbox"></input>');
+				if (this._hideEmptyRows) { checkbox.prop('checked', 'checked'); }
+				checkbox.change(function() {self.HideEmptyRowsCheckboxChanged.call(self, this)});
+				label = $('<label for="HideEmptyRowsCheckbox">Hide Empty Rows</label>');
+				filterBar.append(checkbox);
+				filterBar.append(label);
+
         		var updateButton = $('<input type="button" value="Update" />');
         		updateButton.click(this.UpdateAllInputs.bind(this));
-        		$('#FilterBarContent').append(updateButton);
+        		filterBar.append(updateButton);
+			},			
+			
+			InvisibleZerosCheckboxChanged : function(element)
+			{
+				this._invisibleZeros = element.checked;
+				this.UpdateAllInputs();
+			},
+			
+			HideEmptyRowsCheckboxChanged : function(element)
+			{
+				this._hideEmptyRows = element.checked;
+				this.FilterProject();
 			}
 		};
 		  
