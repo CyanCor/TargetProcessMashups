@@ -16,7 +16,9 @@ tau.mashups
 		    _invisibleZeros : true,
 			_hideEmptyRows : false,
 		    
-		    // Internal constants - do not modify
+		    // Internal constants
+			_settingsKeyInvisibleZeros : 'CyanCor_TimeSheetFilter_InvisibleZeros',
+			_settingsKeyHideEmptyRows : 'CyanCor_TimeSheetFilter_HideEmptyRows',
 		    _observerPanelSelector : '#ctl00_mainArea_pnlUpd',
 		    
 		    // Private fields
@@ -25,10 +27,30 @@ tau.mashups
 		    
 			Initialize : function()
 			{
+				this._invisibleZeros = this.GetBoolean(this._settingsKeyInvisibleZeros, this._invisibleZeros);
+				this._hideEmptyRows = this.GetBoolean(this._settingsKeyHideEmptyRows, this._hideEmptyRows);
+				
 			    this.RenderFilterBar();
 				this.Update();
 				this.AttachControls();
 				this.AttachObserver();
+			},
+			
+			GetBoolean: function(identifier, defaultValue)
+			{
+				var pos = document.cookie.indexOf(identifier + '=');
+				if (pos < 0) { return false; }
+				var value = document.cookie.substr(pos + identifier.length + 1);
+				pos = value.indexOf(';');
+				if (pos > 0) { value = value.substr(0, pos); }
+				return !value
+					? defaultValue
+					: value == 'true';
+			},
+			
+			SetBoolean: function(identifier, value)
+			{
+				document.cookie = identifier + '=' + (value ? 'true' : 'false');
 			},
 			
 			AttachObserver: function()
@@ -165,12 +187,14 @@ tau.mashups
 			InvisibleZerosCheckboxChanged : function(element)
 			{
 				this._invisibleZeros = element.checked;
+				this.SetBoolean(this._settingsKeyInvisibleZeros, this._invisibleZeros);
 				this.UpdateAllInputs();
 			},
 			
 			HideEmptyRowsCheckboxChanged : function(element)
 			{
 				this._hideEmptyRows = element.checked;
+				this.SetBoolean(this._settingsKeyHideEmptyRows, this._hideEmptyRows);
 				this.FilterProject();
 			}
 		};
