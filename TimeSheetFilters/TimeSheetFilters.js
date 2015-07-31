@@ -19,6 +19,7 @@ tau.mashups
 		    // Internal constants
 			_settingsKeyInvisibleZeros : 'CyanCor_TimeSheetFilter_InvisibleZeros',
 			_settingsKeyHideEmptyRows : 'CyanCor_TimeSheetFilter_HideEmptyRows',
+			_settingsKeySelectedProject : 'CyanCor_TimeSheetFilter_SelectedProject',
 		    _observerPanelSelector : '#ctl00_mainArea_pnlUpd',
 		    
 		    // Private fields
@@ -27,30 +28,49 @@ tau.mashups
 		    
 			Initialize : function()
 			{
-				this._invisibleZeros = this.GetBoolean(this._settingsKeyInvisibleZeros, this._invisibleZeros);
-				this._hideEmptyRows = this.GetBoolean(this._settingsKeyHideEmptyRows, this._hideEmptyRows);
+				this._invisibleZeros = this.Get(this._settingsKeyInvisibleZeros, this._invisibleZeros, 'boolean');
+				this._hideEmptyRows = this.Get(this._settingsKeyHideEmptyRows, this._hideEmptyRows, 'boolean');
+				this._selectedProject = this.Get(this._settingsKeySelectedProject, this._allProjectsTitle, 'string');
 				
 			    this.RenderFilterBar();
 				this.Update();
 				this.AttachControls();
 				this.AttachObserver();
+				
+				this.FilterProject();
 			},
 			
-			GetBoolean: function(identifier, defaultValue)
+			Get: function(identifier, defaultValue, type)
 			{
-				var pos = document.cookie.indexOf(identifier + '=');
-				if (pos < 0) { return false; }
-				var value = document.cookie.substr(pos + identifier.length + 1);
-				pos = value.indexOf(';');
-				if (pos > 0) { value = value.substr(0, pos); }
-				return !value
-					? defaultValue
-					: value == 'true';
+				if (!identifier) { return defaultValue; }
+                var value = decodeURIComponent(document.cookie.replace(new RegExp("(?:(?:^|.*;)\\s*" + encodeURIComponent(identifier).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=\\s*([^;]*).*$)|^.*$"), "$1")) || defaultValue;
+				
+				switch (type)
+				{
+				    case 'boolean':
+				        return !value
+					        ? defaultValue
+					        : value == 'true';
+					case 'string':
+					    return value || defaultValue;
+					default:
+					    return null;
+				}
 			},
 			
-			SetBoolean: function(identifier, value)
+			Set: function(identifier, value, type)
 			{
-				document.cookie = identifier + '=' + (value ? 'true' : 'false');
+			    var content = encodeURIComponent(identifier) + '=';
+			    switch (type)
+			    {
+			        case 'boolean':
+			            content += value ? 'true' : 'false';
+			            break;
+			        case 'string':
+			            content += encodeURIComponent(value);
+			            break;
+			    }
+				document.cookie = content + '; expires=Fri, 31 Dec 9999 23:59:59 GMT';
 			},
 			
 			AttachObserver: function()
@@ -126,7 +146,11 @@ tau.mashups
 			FilterProject: function(projectName)
 			{
 				projectName = projectName || this._selectedProject || this._allProjectsTitle;
-			    this._selectedProject = projectName;
+				if (projectName != this._selectedProject)
+				{
+			        this._selectedProject = projectName;
+			        this.Set(this._settingsKeySelectedProject, this._selectedProject, 'string');
+				}
 			    
 			    var self = this;
 			    $('.generalTable .dataRow').each(function()
@@ -187,14 +211,14 @@ tau.mashups
 			InvisibleZerosCheckboxChanged : function(element)
 			{
 				this._invisibleZeros = element.checked;
-				this.SetBoolean(this._settingsKeyInvisibleZeros, this._invisibleZeros);
+				this.Set(this._settingsKeyInvisibleZeros, this._invisibleZeros, 'boolean');
 				this.UpdateAllInputs();
 			},
 			
 			HideEmptyRowsCheckboxChanged : function(element)
 			{
 				this._hideEmptyRows = element.checked;
-				this.SetBoolean(this._settingsKeyHideEmptyRows, this._hideEmptyRows);
+				this.Set(this._settingsKeyHideEmptyRows, this._hideEmptyRows, 'boolean');
 				this.FilterProject();
 			}
 		};
