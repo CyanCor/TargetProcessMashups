@@ -1,0 +1,4 @@
+Cards: User Story, Bug, Request
+Vertical: State
+Horizontal: Business Value
+Filter: ?((EntityState.IsFinal is False) and (not InboundRelations.Where(Inbound.EndDate is None and (RelationType.Name is 'Blocker' or RelationType.Name is 'Dependency'))) and ((Iteration is not None) or (EntityType is 'Request') or (EntityState.Name is 'In Progress' or EntityState.Name is 'Paused' or EntityState.Name is 'In Testing'))) or (EntityType.Name is 'Bug' and EntityState.IsFinal is False and (Iteration is None and (PlannedStartDate is None or PlannedStartDate <= TODAY)))
