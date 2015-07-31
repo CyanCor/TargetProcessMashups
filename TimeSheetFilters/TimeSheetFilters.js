@@ -84,7 +84,7 @@ tau.mashups
         		{
         		    var self = this;
         			var observer = new MutationObserver(function() { self.Update.call(self); });
-        			observer.observe($target[0], { childList: true });
+        			observer.observe($target[0], { subtree: true, childList: true, attribute: false, characterData: true });
         		}
 			},
 			
@@ -202,10 +202,6 @@ tau.mashups
 				label = $('<label for="HideEmptyRowsCheckbox">Hide Empty Rows</label>');
 				filterBar.append(checkbox);
 				filterBar.append(label);
-
-        		var updateButton = $('<input type="button" value="Update" />');
-        		updateButton.click(this.UpdateAllInputs.bind(this));
-        		filterBar.append(updateButton);
 			},			
 			
 			InvisibleZerosCheckboxChanged : function(element)
